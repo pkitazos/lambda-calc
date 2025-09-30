@@ -1,1 +1,1 @@
-fn x:int, y:int . x
+fn f:unit -> bool . f ()

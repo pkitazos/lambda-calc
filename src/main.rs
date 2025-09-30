@@ -12,6 +12,7 @@ use nom::{
 
 #[derive(Debug, Clone, PartialEq)]
 enum Type {
+    Unit,
     Int,
     Bool,
     Arrow(Box<Type>, Box<Type>),
@@ -21,6 +22,7 @@ enum Type {
 enum Const {
     Int(i32),
     Bool(bool),
+    Unit,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -51,7 +53,7 @@ fn parse_paren(input: &str) -> IResult<&str, Term> {
 }
 
 fn parse_const(input: &str) -> IResult<&str, Term> {
-    alt((parse_bool, parse_int)).parse(input)
+    alt((parse_unit, parse_int, parse_bool)).parse(input)
 }
 
 fn parse_int(input: &str) -> IResult<&str, Term> {
@@ -67,6 +69,10 @@ fn parse_bool(input: &str) -> IResult<&str, Term> {
         map(ws(tag("true")), |_| Term::Const(Const::Bool(true))),
     ))
     .parse(input)
+}
+
+fn parse_unit(input: &str) -> IResult<&str, Term> {
+    map(ws(tag("()")), |_| Term::Const(Const::Unit)).parse(input)
 }
 
 fn parse_var(input: &str) -> IResult<&str, Term> {
@@ -103,6 +109,7 @@ fn parse_type(input: &str) -> IResult<&str, Type> {
 
 fn parse_base_type(input: &str) -> IResult<&str, Type> {
     alt((
+        map(tag("unit"), |_| Type::Unit),
         map(tag("int"), |_| Type::Int),
         map(tag("bool"), |_| Type::Bool),
     ))

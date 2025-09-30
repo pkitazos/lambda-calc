@@ -3,10 +3,11 @@
 ## syntax
 
 ```
-T     := int, bool
-τ     := τ -> τ, Τ
+T     := unit | int | bool
+τ     := τ -> τ | (τ, τ) | T
 
 M, N  := x
+      | let x = M in N
       | fn x:τ . M
       | M N
       | c
@@ -16,4 +17,3 @@ M, N  := x
 
 - Let expressions
 - Pairs (product types)
-- Unit type
