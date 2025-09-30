@@ -1,31 +1,19 @@
 # Simply Typed Lambda Calculus
 
+## syntax
+
 ```
 T     := int, bool
 τ     := τ -> τ, Τ
 
 M, N  := x
-      | λx:τ.M
+      | fn x:τ . M
       | M N
       | c
 ```
 
-
-```
-λx:int.
-λx: int.
-λx :int.
-λx : int.
-λ x:int .
-λ x : int .
-```
-
-
-## next
+## next up:
 
 - Let expressions
 - Pairs (product types)
 - Unit type
-
-
-fn x:int . x
