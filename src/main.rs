@@ -15,6 +15,7 @@ enum Type {
     Unit,
     Int,
     Bool,
+    Pair(Box<Type>, Box<Type>),
     Arrow(Box<Type>, Box<Type>),
 }
 
@@ -29,7 +30,10 @@ enum Const {
 enum Term {
     Const(Const),
     Var(String),
+    Pair(Box<Term>, Box<Term>),
     Lambda(String, Type, Box<Term>),
+    Fst(Box<Term>),
+    Snd(Box<Term>),
     App(Box<Term>, Box<Term>),
 }
 
@@ -45,7 +49,7 @@ fn parse_term(input: &str) -> IResult<&str, Term> {
 }
 
 fn parse_atom(input: &str) -> IResult<&str, Term> {
-    alt((parse_const, parse_var, parse_paren)).parse(input)
+    alt((parse_const, parse_var, parse_pair, parse_paren)).parse(input)
 }
 
 fn parse_paren(input: &str) -> IResult<&str, Term> {
@@ -54,6 +58,18 @@ fn parse_paren(input: &str) -> IResult<&str, Term> {
 
 fn parse_const(input: &str) -> IResult<&str, Term> {
     alt((parse_unit, parse_int, parse_bool)).parse(input)
+}
+
+fn parse_pair(input: &str) -> IResult<&str, Term> {
+    map(
+        delimited(
+            ws(char('(')),
+            separated_pair(parse_term, ws(char(',')), parse_term),
+            ws(char(')')),
+        ),
+        |(fst, snd): (Term, Term)| Term::Pair(Box::new(fst), Box::new(snd)),
+    )
+    .parse(input)
 }
 
 fn parse_int(input: &str) -> IResult<&str, Term> {
@@ -76,10 +92,11 @@ fn parse_unit(input: &str) -> IResult<&str, Term> {
 }
 
 fn parse_var(input: &str) -> IResult<&str, Term> {
-    let (input, (v1, v2)) = pair(alpha1, alphanumeric0).parse(input)?;
-    let var = format!("{v1}{v2}");
-
-    Ok((input, Term::Var(var)))
+    map(pair(alpha1, alphanumeric0), |(v1, v2): (&str, &str)| {
+        let var = format!("{v1}{v2}");
+        Term::Var(var)
+    })
+    .parse(input)
 }
 
 fn parse_lambda(input: &str) -> IResult<&str, Term> {
@@ -104,7 +121,7 @@ fn parse_lambda_arg(input: &str) -> IResult<&str, (String, Type)> {
 }
 
 fn parse_type(input: &str) -> IResult<&str, Type> {
-    alt((parse_arrow_type, parse_base_type)).parse(input)
+    alt((parse_arrow_type, parse_pair_type, parse_base_type)).parse(input)
 }
 
 fn parse_base_type(input: &str) -> IResult<&str, Type> {
@@ -116,12 +133,24 @@ fn parse_base_type(input: &str) -> IResult<&str, Type> {
     .parse(input)
 }
 
-fn parse_arrow_type(input: &str) -> IResult<&str, Type> {
-    let (input, lhs) = parse_base_type(input)?;
-    let (input, _) = ws(tag("->")).parse(input)?;
-    let (input, rhs) = parse_type(input)?;
+fn parse_pair_type(input: &str) -> IResult<&str, Type> {
+    map(
+        delimited(
+            ws(char('(')),
+            separated_pair(parse_type, ws(char(',')), parse_type),
+            ws(char(')')),
+        ),
+        |(fst, snd): (Type, Type)| Type::Pair(Box::new(fst), Box::new(snd)),
+    )
+    .parse(input)
+}
 
-    Ok((input, Type::Arrow(Box::new(lhs), Box::new(rhs))))
+fn parse_arrow_type(input: &str) -> IResult<&str, Type> {
+    map(
+        separated_pair(parse_base_type, ws(tag("->")), parse_type),
+        |(lhs, rhs): (Type, Type)| Type::Arrow(Box::new(lhs), Box::new(rhs)),
+    )
+    .parse(input)
 }
 
 fn desugar_lambda(args: Vec<(String, Type)>, body: Term) -> Term {
@@ -129,16 +158,32 @@ fn desugar_lambda(args: Vec<(String, Type)>, body: Term) -> Term {
         .rev()
         .fold(body, |acc, (v, t)| Term::Lambda(v, t, Box::new(acc)))
 }
-
 fn parse_app(input: &str) -> IResult<&str, Term> {
-    let (input, atoms) = many1(ws(parse_atom)).parse(input)?;
+    alt((parse_pair_destructor, parse_arbitrary_app)).parse(input)
+}
 
-    let app = atoms
-        .into_iter()
-        .reduce(|acc, term| Term::App(Box::new(acc), Box::new(term)))
-        .unwrap();
+fn parse_pair_destructor(input: &str) -> IResult<&str, Term> {
+    alt((
+        map(
+            pair(ws(tag("fst")), parse_atom),
+            |(_, term): (&str, Term)| Term::Fst(Box::new(term)),
+        ),
+        map(
+            pair(ws(tag("snd")), parse_atom),
+            |(_, term): (&str, Term)| Term::Snd(Box::new(term)),
+        ),
+    ))
+    .parse(input)
+}
 
-    Ok((input, app))
+fn parse_arbitrary_app(input: &str) -> IResult<&str, Term> {
+    map(many1(ws(parse_atom)), |atoms: Vec<Term>| {
+        atoms
+            .into_iter()
+            .reduce(|acc, term| Term::App(Box::new(acc), Box::new(term)))
+            .unwrap()
+    })
+    .parse(input)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

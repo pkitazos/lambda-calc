@@ -1,1 +1,1 @@
-fn f:unit -> bool . f ()
+fst (fst ((1, 2), 3))
