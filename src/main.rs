@@ -27,6 +27,13 @@ enum Const {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+enum BinOp {
+    Eq,
+    Plus,
+    Minus,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 enum Term {
     Const(Const),
     Var(String),
@@ -37,9 +44,12 @@ enum Term {
     App(Box<Term>, Box<Term>),
     Let(String, Box<Term>, Box<Term>),
     If(Box<Term>, Box<Term>, Box<Term>),
+    BinOp(BinOp, Box<Term>, Box<Term>),
 }
 
-const KEYWORDS: &[&str] = &["fn", "let", "in", "fst", "snd", "if", "then", "else"];
+const BUILTINS: &[&str] = &[
+    "fn", "let", "in", "fst", "snd", "if", "then", "else", "==", "+", "-",
+];
 
 fn ws<'a, F, O>(inner: F) -> impl Parser<&'a str, Output = O, Error = nom::error::Error<&'a str>>
 where
@@ -49,7 +59,7 @@ where
 }
 
 fn parse_term(input: &str) -> IResult<&str, Term> {
-    alt((parse_lambda, parse_let, parse_if, parse_app)).parse(input)
+    alt((parse_lambda, parse_let, parse_bin_op, parse_if, parse_app)).parse(input)
 }
 
 fn parse_atom(input: &str) -> IResult<&str, Term> {
@@ -101,7 +111,7 @@ fn parse_identifier(input: &str) -> IResult<&str, &str> {
             alt((alpha1, tag("_"))),
             many0_count(alt((alphanumeric1, tag("_")))),
         )),
-        |id: &str| !KEYWORDS.contains(&id),
+        |id: &str| !BUILTINS.contains(&id),
     )
     .parse(input)
 }
@@ -218,6 +228,22 @@ fn parse_if(input: &str) -> IResult<&str, Term> {
             preceded(ws(tag("else")), parse_term),
         ),
         |(t1, t2, t3): (Term, Term, Term)| Term::If(Box::new(t1), Box::new(t2), Box::new(t3)),
+    )
+    .parse(input)
+}
+
+fn parse_bin_op(input: &str) -> IResult<&str, Term> {
+    map(
+        (
+            parse_atom,
+            alt((
+                map(ws(tag("==")), |_| BinOp::Eq),
+                map(ws(char('+')), |_| BinOp::Plus),
+                map(ws(char('-')), |_| BinOp::Minus),
+            )),
+            parse_atom,
+        ),
+        |(t1, op, t2): (Term, BinOp, Term)| Term::BinOp(op, Box::new(t1), Box::new(t2)),
     )
     .parse(input)
 }

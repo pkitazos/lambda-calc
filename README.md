@@ -11,9 +11,12 @@ T     := unit | int | bool
 τ     := τ -> τ | (τ, τ) | T
 
 M, N  := x
+      | M ◇ N
       | if M then N else O
       | let x = M in N
       | fn x:τ . M
       | M N
       | c
+
+◇    := + | - | ==
 ```
