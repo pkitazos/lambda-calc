@@ -7,7 +7,7 @@ use nom::{
     character::complete::{alpha1, alphanumeric1, char, digit1, space0},
     combinator::{map, recognize, verify},
     multi::{many0_count, many1, separated_list1},
-    sequence::{delimited, pair, separated_pair},
+    sequence::{delimited, pair, preceded, separated_pair},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -36,9 +36,10 @@ enum Term {
     Snd(Box<Term>),
     App(Box<Term>, Box<Term>),
     Let(String, Box<Term>, Box<Term>),
+    If(Box<Term>, Box<Term>, Box<Term>),
 }
 
-const KEYWORDS: &[&str] = &["fn", "let", "in", "fst", "snd"];
+const KEYWORDS: &[&str] = &["fn", "let", "in", "fst", "snd", "if", "then", "else"];
 
 fn ws<'a, F, O>(inner: F) -> impl Parser<&'a str, Output = O, Error = nom::error::Error<&'a str>>
 where
@@ -48,7 +49,7 @@ where
 }
 
 fn parse_term(input: &str) -> IResult<&str, Term> {
-    alt((parse_lambda, parse_let, parse_app)).parse(input)
+    alt((parse_lambda, parse_let, parse_if, parse_app)).parse(input)
 }
 
 fn parse_atom(input: &str) -> IResult<&str, Term> {
@@ -200,14 +201,23 @@ fn parse_arbitrary_app(input: &str) -> IResult<&str, Term> {
 fn parse_let(input: &str) -> IResult<&str, Term> {
     map(
         (
-            delimited(
-                ws(tag("let")),
-                separated_pair(parse_identifier, ws(char('=')), parse_term),
-                ws(tag("in")),
-            ),
-            parse_term,
+            preceded(ws(tag("let")), parse_identifier),
+            preceded(ws(char('=')), parse_term),
+            preceded(ws(tag("in")), parse_term),
         ),
-        |((v, t2), t3): ((&str, Term), Term)| Term::Let(v.to_string(), Box::new(t2), Box::new(t3)),
+        |(v, t2, t3): (&str, Term, Term)| Term::Let(v.to_string(), Box::new(t2), Box::new(t3)),
+    )
+    .parse(input)
+}
+
+fn parse_if(input: &str) -> IResult<&str, Term> {
+    map(
+        (
+            preceded(ws(tag("if")), parse_term),
+            preceded(ws(tag("then")), parse_term),
+            preceded(ws(tag("else")), parse_term),
+        ),
+        |(t1, t2, t3): (Term, Term, Term)| Term::If(Box::new(t1), Box::new(t2), Box::new(t3)),
     )
     .parse(input)
 }
