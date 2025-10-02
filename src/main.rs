@@ -4,9 +4,9 @@ use nom::{
     IResult, Parser,
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alpha1, alphanumeric0, char, digit1, space0},
-    combinator::map,
-    multi::{many1, separated_list1},
+    character::complete::{alpha1, alphanumeric1, char, digit1, space0},
+    combinator::{map, recognize, verify},
+    multi::{many0_count, many1, separated_list1},
     sequence::{delimited, pair, separated_pair},
 };
 
@@ -35,7 +35,10 @@ enum Term {
     Fst(Box<Term>),
     Snd(Box<Term>),
     App(Box<Term>, Box<Term>),
+    Let(String, Box<Term>, Box<Term>),
 }
+
+const KEYWORDS: &[&str] = &["fn", "let", "in", "fst", "snd"];
 
 fn ws<'a, F, O>(inner: F) -> impl Parser<&'a str, Output = O, Error = nom::error::Error<&'a str>>
 where
@@ -45,7 +48,7 @@ where
 }
 
 fn parse_term(input: &str) -> IResult<&str, Term> {
-    alt((parse_lambda, parse_app)).parse(input)
+    alt((parse_lambda, parse_let, parse_app)).parse(input)
 }
 
 fn parse_atom(input: &str) -> IResult<&str, Term> {
@@ -91,12 +94,19 @@ fn parse_unit(input: &str) -> IResult<&str, Term> {
     map(ws(tag("()")), |_| Term::Const(Const::Unit)).parse(input)
 }
 
-fn parse_var(input: &str) -> IResult<&str, Term> {
-    map(pair(alpha1, alphanumeric0), |(v1, v2): (&str, &str)| {
-        let var = format!("{v1}{v2}");
-        Term::Var(var)
-    })
+fn parse_identifier(input: &str) -> IResult<&str, &str> {
+    verify(
+        recognize(pair(
+            alt((alpha1, tag("_"))),
+            many0_count(alt((alphanumeric1, tag("_")))),
+        )),
+        |id: &str| !KEYWORDS.contains(&id),
+    )
     .parse(input)
+}
+
+fn parse_var(input: &str) -> IResult<&str, Term> {
+    map(parse_identifier, |v: &str| Term::Var(v.to_string())).parse(input)
 }
 
 fn parse_lambda(input: &str) -> IResult<&str, Term> {
@@ -113,7 +123,7 @@ fn parse_lambda_args(input: &str) -> IResult<&str, Vec<(String, Type)>> {
 
 fn parse_lambda_arg(input: &str) -> IResult<&str, (String, Type)> {
     separated_pair(
-        map(alpha1, |s: &str| s.to_string()),
+        map(parse_identifier, |s: &str| s.to_string()),
         ws(char(':')),
         parse_type,
     )
@@ -158,6 +168,7 @@ fn desugar_lambda(args: Vec<(String, Type)>, body: Term) -> Term {
         .rev()
         .fold(body, |acc, (v, t)| Term::Lambda(v, t, Box::new(acc)))
 }
+
 fn parse_app(input: &str) -> IResult<&str, Term> {
     alt((parse_pair_destructor, parse_arbitrary_app)).parse(input)
 }
@@ -183,6 +194,21 @@ fn parse_arbitrary_app(input: &str) -> IResult<&str, Term> {
             .reduce(|acc, term| Term::App(Box::new(acc), Box::new(term)))
             .unwrap()
     })
+    .parse(input)
+}
+
+fn parse_let(input: &str) -> IResult<&str, Term> {
+    map(
+        (
+            delimited(
+                ws(tag("let")),
+                separated_pair(parse_identifier, ws(char('=')), parse_term),
+                ws(tag("in")),
+            ),
+            parse_term,
+        ),
+        |((v, t2), t3): ((&str, Term), Term)| Term::Let(v.to_string(), Box::new(t2), Box::new(t3)),
+    )
     .parse(input)
 }
 

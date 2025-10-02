@@ -13,12 +13,14 @@ M, N  := x
       | c
 ```
 
-## next up:
-
-- Let expressions
-
-
 ## Types
+
+### Let-expression
+```
+Γ ⊢ M : τ_1     Γ, x : τ_1  ⊢ N : τ_2
+---------------------------------------
+      Γ ⊢ let x = M in N : τ_2
+```
 
 ### Pairs
 
