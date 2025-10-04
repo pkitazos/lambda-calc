@@ -8,11 +8,14 @@ The core of the language will just be the STLC + a tiny bit of quality of life (
 
 ```
 T     := unit | int | bool
-τ     := τ -> τ | (τ, τ) | T
+τ     := τ -> τ | τ × τ | T
 
 M, N  := x
       | M ◇ N
       | if M then N else O
+      | (M, N)
+      | fst M
+      | snd M
       | let x = M in N
       | fn x:τ . M
       | M N
