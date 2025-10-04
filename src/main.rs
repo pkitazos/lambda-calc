@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 use stlc::parse_term;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    match read_code("test/test.lc") {
+    match read_code("examples/scratch.lc") {
         Some(code) => {
             println!("{:#?}", code);
             if let Ok((_, expr)) = parse_term(&code) {
