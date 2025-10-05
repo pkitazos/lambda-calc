@@ -1,12 +1,15 @@
-use std::collections::HashMap;
-
 use crate::{BinOp, Const, Term};
 
-pub fn eval(term: Term, env: &HashMap<String, Term>) -> Term {
+pub fn eval(term: Term, env: &Vec<(String, Term)>) -> Term {
     match term {
         Term::Const(_c) => term,
 
-        Term::Var(v) => env.get(&v).unwrap().to_owned(),
+        Term::Var(v) => env
+            .iter()
+            .rev()
+            .find(|(name, _)| name == &v)
+            .map(|(_, term)| term.clone())
+            .unwrap(),
 
         Term::Pair(m, n) => Term::Pair(Box::new(eval(*m, env)), Box::new(eval(*n, env))),
 
@@ -24,7 +27,7 @@ pub fn eval(term: Term, env: &HashMap<String, Term>) -> Term {
         Term::App(m, n) => match eval(*m, env) {
             Term::Lambda(v, _, m_2) => {
                 let mut new_env = env.clone();
-                new_env.insert(v, eval(*n, env));
+                new_env.push((v, eval(*n, env)));
                 eval(*m_2, &new_env)
             }
             _ => panic!("runtime error"),
@@ -32,7 +35,7 @@ pub fn eval(term: Term, env: &HashMap<String, Term>) -> Term {
 
         Term::Let(v, m, n) => {
             let mut new_env = env.clone();
-            new_env.insert(v, eval(*m, env));
+            new_env.push((v, eval(*m, env)));
             eval(*n, &new_env)
         }
 
