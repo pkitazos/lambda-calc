@@ -22,11 +22,17 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
 
         Term::Fst(m) => match eval(*m, env) {
             Term::Pair(a, _b) => *a,
-            _ => panic!("runtime error"),
+            other => panic!(
+                "runtime error: expected a Pair in Fst, but found {:?}",
+                other
+            ),
         },
         Term::Snd(m) => match eval(*m, env) {
             Term::Pair(_a, b) => *b,
-            _ => panic!("runtime error"),
+            other => panic!(
+                "runtime error: expected a Pair in Snd, but found {:?}",
+                other
+            ),
         },
 
         Term::App(m, n) => match eval(*m, env) {
@@ -36,7 +42,10 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
 
                 eval(*m_2, &new_env)
             }
-            _ => panic!("runtime error"),
+            other => panic!(
+                "runtime error: expected a Lambda in App, but found {:?}",
+                other
+            ),
         },
 
         Term::Let(v, m, n) => {
@@ -49,7 +58,10 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
         Term::If(b, m, n) => match eval(*b, env) {
             Term::Const(Const::Bool(true)) => eval(*m, env),
             Term::Const(Const::Bool(false)) => eval(*n, env),
-            _ => panic!("runtime error"),
+            other => panic!(
+                "runtime error: expected a Bool in If condition, but found {:?}",
+                other
+            ),
         },
 
         Term::BinOp(BinOp::Eq, m, n) => {
@@ -65,7 +77,10 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
                     Term::Const(Const::Bool(i_m == i_n))
                 }
 
-                _ => panic!("runtime error"),
+                (left, right) => panic!(
+                    "runtime error: cannot compare {:?} and {:?} with Eq",
+                    left, right
+                ),
             }
         }
 
@@ -81,7 +96,10 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
                 (BinOp::Minus, Term::Const(Const::Int(i_m)), Term::Const(Const::Int(i_n))) => {
                     Term::Const(Const::Int(i_m - i_n))
                 }
-                _ => panic!("runtime error"),
+                (op, left, right) => panic!(
+                    "runtime error: unsupported operation {:?} with operands {:?} and {:?}",
+                    op, left, right
+                ),
             }
         }
     }
@@ -89,7 +107,7 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
 
 fn find(v: &str, env: &Rc<Env>) -> Term {
     match env.as_ref() {
-        Env::Empty => panic!("runtime error"),
+        Env::Empty => panic!("runtime error: variable '{}' not found in environment", v),
         Env::Cons(name, term, rest) => {
             if name == v {
                 term.clone()
