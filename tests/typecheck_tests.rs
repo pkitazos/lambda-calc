@@ -15,28 +15,28 @@ fn env_with(bindings: Vec<(&str, Type)>) -> HashMap<String, Type> {
 #[test]
 fn test_typecheck_const_int() {
     let term = Term::Const(Const::Int(42));
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
 #[test]
 fn test_typecheck_const_bool_true() {
     let term = Term::Const(Const::Bool(true));
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Bool));
 }
 
 #[test]
 fn test_typecheck_const_bool_false() {
     let term = Term::Const(Const::Bool(false));
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Bool));
 }
 
 #[test]
 fn test_typecheck_const_unit() {
     let term = Term::Const(Const::Unit);
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Unit));
 }
 
@@ -44,14 +44,14 @@ fn test_typecheck_const_unit() {
 fn test_typecheck_var_found() {
     let env = env_with(vec![("x", Type::Int)]);
     let term = Term::Var("x".to_string());
-    let result = typecheck(&env, &term);
+    let result = typechecker::typecheck(&env, &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
 #[test]
 fn test_typecheck_var_not_found() {
     let term = Term::Var("x".to_string());
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -61,7 +61,7 @@ fn test_typecheck_pair_int_int() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Int(2))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(
         result,
         Ok(Type::Pair(Box::new(Type::Int), Box::new(Type::Int)))
@@ -74,7 +74,7 @@ fn test_typecheck_pair_bool_int() {
         Box::new(Term::Const(Const::Bool(true))),
         Box::new(Term::Const(Const::Int(5))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(
         result,
         Ok(Type::Pair(Box::new(Type::Bool), Box::new(Type::Int)))
@@ -90,7 +90,7 @@ fn test_typecheck_pair_nested() {
         )),
         Box::new(Term::Const(Const::Bool(true))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     let expected = Type::Pair(
         Box::new(Type::Pair(Box::new(Type::Int), Box::new(Type::Int))),
         Box::new(Type::Bool),
@@ -105,7 +105,7 @@ fn test_typecheck_lambda_identity() {
         Type::Int,
         Box::new(Term::Var("x".to_string())),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(
         result,
         Ok(Type::Arrow(Box::new(Type::Int), Box::new(Type::Int)))
@@ -119,7 +119,7 @@ fn test_typecheck_lambda_const_function() {
         Type::Int,
         Box::new(Term::Const(Const::Int(42))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(
         result,
         Ok(Type::Arrow(Box::new(Type::Int), Box::new(Type::Int)))
@@ -137,7 +137,7 @@ fn test_typecheck_lambda_nested() {
             Box::new(Term::Var("x".to_string())),
         )),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     let expected = Type::Arrow(
         Box::new(Type::Int),
         Box::new(Type::Arrow(Box::new(Type::Bool), Box::new(Type::Int))),
@@ -151,7 +151,7 @@ fn test_typecheck_fst_pair() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Bool(true))),
     )));
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -161,21 +161,21 @@ fn test_typecheck_snd_pair() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Bool(true))),
     )));
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Bool));
 }
 
 #[test]
 fn test_typecheck_fst_non_pair() {
     let term = Term::Fst(Box::new(Term::Const(Const::Int(5))));
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
 #[test]
 fn test_typecheck_snd_non_pair() {
     let term = Term::Snd(Box::new(Term::Const(Const::Bool(true))));
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -189,7 +189,7 @@ fn test_typecheck_app_identity() {
         )),
         Box::new(Term::Const(Const::Int(5))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -203,7 +203,7 @@ fn test_typecheck_app_wrong_type() {
         )),
         Box::new(Term::Const(Const::Bool(true))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -213,7 +213,7 @@ fn test_typecheck_app_non_function() {
         Box::new(Term::Const(Const::Int(5))),
         Box::new(Term::Const(Const::Int(10))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -234,7 +234,7 @@ fn test_typecheck_app_curried() {
         )),
         Box::new(Term::Const(Const::Int(10))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -245,7 +245,7 @@ fn test_typecheck_let_simple() {
         Box::new(Term::Const(Const::Int(5))),
         Box::new(Term::Var("x".to_string())),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -263,7 +263,7 @@ fn test_typecheck_let_lambda() {
             Box::new(Term::Const(Const::Int(10))),
         )),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -278,7 +278,7 @@ fn test_typecheck_let_shadowing() {
             Box::new(Term::Var("x".to_string())),
         )),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Bool));
 }
 
@@ -289,7 +289,7 @@ fn test_typecheck_if_simple() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Int(2))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -300,7 +300,7 @@ fn test_typecheck_if_non_bool_condition() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Int(2))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -311,7 +311,7 @@ fn test_typecheck_if_branch_type_mismatch() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Bool(false))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -330,7 +330,7 @@ fn test_typecheck_if_with_lambda() {
             Box::new(Term::Var("y".to_string())),
         )),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(
         result,
         Ok(Type::Arrow(Box::new(Type::Int), Box::new(Type::Int)))
@@ -344,7 +344,7 @@ fn test_typecheck_binop_plus() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Int(2))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -355,7 +355,7 @@ fn test_typecheck_binop_minus() {
         Box::new(Term::Const(Const::Int(5))),
         Box::new(Term::Const(Const::Int(3))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -366,7 +366,7 @@ fn test_typecheck_binop_plus_wrong_lhs_type() {
         Box::new(Term::Const(Const::Bool(true))),
         Box::new(Term::Const(Const::Int(2))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -377,7 +377,7 @@ fn test_typecheck_binop_plus_wrong_rhs_type() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Bool(false))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -388,7 +388,7 @@ fn test_typecheck_binop_eq_int() {
         Box::new(Term::Const(Const::Int(5))),
         Box::new(Term::Const(Const::Int(5))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Bool));
 }
 
@@ -399,7 +399,7 @@ fn test_typecheck_binop_eq_bool() {
         Box::new(Term::Const(Const::Bool(true))),
         Box::new(Term::Const(Const::Bool(false))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Bool));
 }
 
@@ -410,7 +410,7 @@ fn test_typecheck_binop_eq_type_mismatch() {
         Box::new(Term::Const(Const::Int(5))),
         Box::new(Term::Const(Const::Bool(true))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert!(result.is_err());
 }
 
@@ -439,7 +439,7 @@ fn test_typecheck_complex_let_add() {
             Box::new(Term::Const(Const::Int(5))),
         )),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -465,7 +465,7 @@ fn test_typecheck_complex_lambda_if() {
         )),
         Box::new(Term::Const(Const::Int(10))),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -483,7 +483,7 @@ fn test_typecheck_complex_pair_operations() {
             Box::new(Term::Snd(Box::new(Term::Var("pair".to_string())))),
         )),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -520,7 +520,7 @@ fn test_typecheck_complex_nested_let() {
             )),
         )),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }
 
@@ -556,6 +556,6 @@ fn test_typecheck_higher_order_function() {
             Box::new(Term::Const(Const::Int(5))),
         )),
     );
-    let result = typecheck(&empty_env(), &term);
+    let result = typechecker::typecheck(&empty_env(), &term);
     assert_eq!(result, Ok(Type::Int));
 }

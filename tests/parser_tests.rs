@@ -4,49 +4,49 @@ use stlc::*;
 fn test_const_int() {
     let input = "42";
     let expected = Term::Const(Const::Int(42));
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
 fn test_const_bool_true() {
     let input = "true";
     let expected = Term::Const(Const::Bool(true));
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
 fn test_const_bool_false() {
     let input = "false";
     let expected = Term::Const(Const::Bool(false));
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
 fn test_const_unit() {
     let input = "()";
     let expected = Term::Const(Const::Unit);
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
 fn test_var_x() {
     let input = "x";
     let expected = Term::Var("x".to_string());
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
 fn test_var_foo_bar() {
     let input = "foo_bar";
     let expected = Term::Var("foo_bar".to_string());
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
 fn test_var_underscore() {
     let input = "_underscore";
     let expected = Term::Var("_underscore".to_string());
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -56,7 +56,7 @@ fn test_pair_int() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Int(2))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -66,7 +66,7 @@ fn test_pair_bool() {
         Box::new(Term::Const(Const::Bool(true))),
         Box::new(Term::Const(Const::Bool(false))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -79,7 +79,7 @@ fn test_pair_nested() {
         )),
         Box::new(Term::Const(Const::Int(3))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -89,7 +89,7 @@ fn test_pair_var() {
         Box::new(Term::Var("x".to_string())),
         Box::new(Term::Var("y".to_string())),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -100,7 +100,7 @@ fn test_lambda_simple() {
         Type::Int,
         Box::new(Term::Var("x".to_string())),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -115,7 +115,7 @@ fn test_lambda_multi_arg() {
             Box::new(Term::Var("x".to_string())),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn test_lambda_arrow_type() {
             )),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -143,7 +143,7 @@ fn test_fst() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Int(2))),
     )));
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -153,7 +153,7 @@ fn test_snd() {
         Box::new(Term::Var("x".to_string())),
         Box::new(Term::Var("y".to_string())),
     )));
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -166,7 +166,7 @@ fn test_fst_nested() {
         )),
         Box::new(Term::Const(Const::Int(3))),
     )))));
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -176,7 +176,7 @@ fn test_app_simple() {
         Box::new(Term::Var("f".to_string())),
         Box::new(Term::Var("x".to_string())),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -189,7 +189,7 @@ fn test_app_multi() {
         )),
         Box::new(Term::Var("y".to_string())),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -202,7 +202,7 @@ fn test_app_nested() {
             Box::new(Term::Var("x".to_string())),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -216,7 +216,7 @@ fn test_app_lambda() {
         )),
         Box::new(Term::Const(Const::Int(5))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -227,7 +227,7 @@ fn test_let_simple() {
         Box::new(Term::Const(Const::Int(5))),
         Box::new(Term::Var("x".to_string())),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -245,7 +245,7 @@ fn test_let_lambda() {
             Box::new(Term::Const(Const::Int(10))),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -260,7 +260,7 @@ fn test_let_nested() {
             Box::new(Term::Var("x".to_string())),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -271,7 +271,7 @@ fn test_if_simple() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Int(2))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -286,7 +286,7 @@ fn test_if_with_binop() {
         Box::new(Term::Var("x".to_string())),
         Box::new(Term::Const(Const::Int(0))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -309,7 +309,7 @@ fn test_if_complex() {
             Box::new(Term::Const(Const::Int(2))),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -320,7 +320,7 @@ fn test_binop_plus() {
         Box::new(Term::Const(Const::Int(1))),
         Box::new(Term::Const(Const::Int(2))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -331,7 +331,7 @@ fn test_binop_minus() {
         Box::new(Term::Var("x".to_string())),
         Box::new(Term::Var("y".to_string())),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -342,7 +342,7 @@ fn test_binop_eq() {
         Box::new(Term::Const(Const::Int(5))),
         Box::new(Term::Const(Const::Int(5))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -353,7 +353,7 @@ fn test_binop_plus_var() {
         Box::new(Term::Var("x".to_string())),
         Box::new(Term::Const(Const::Int(1))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -382,7 +382,7 @@ fn test_complex_let_add() {
             Box::new(Term::Const(Const::Int(5))),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -408,7 +408,7 @@ fn test_complex_lambda_if() {
         )),
         Box::new(Term::Const(Const::Int(10))),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -426,7 +426,7 @@ fn test_complex_let_pair() {
             Box::new(Term::Snd(Box::new(Term::Var("pair".to_string())))),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -441,7 +441,7 @@ fn test_complex_lambda_pair_type() {
             Box::new(Term::Snd(Box::new(Term::Var("p".to_string())))),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -464,7 +464,7 @@ fn test_complex_if_lambda() {
             )),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
 
 #[test]
@@ -501,5 +501,5 @@ fn test_complex_nested_let() {
             )),
         )),
     );
-    assert_eq!(parse_term(input), Ok(("", expected)));
+    assert_eq!(parser::parse(input), Ok(("", expected)));
 }
