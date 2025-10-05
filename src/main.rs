@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let env = HashMap::new();
                 match typecheck(&env, &expr) {
                     Ok(t) => println!("Type: {:#?}", t),
-                    Err(e) => println!("Type error: {}", e),
+                    Err(_e) => println!("Type error!",),
                 }
             }
         }

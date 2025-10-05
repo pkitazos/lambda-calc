@@ -247,7 +247,46 @@ fn parse_bin_op(input: &str) -> IResult<&str, Term> {
     .parse(input)
 }
 
-pub fn typecheck(env: &HashMap<String, Type>, term: &Term) -> Result<Type, String> {
+#[derive(Debug, Clone, PartialEq)]
+pub enum TypeError {
+    UndefinedVariable {
+        var: String,
+        term: Term,
+    },
+    TypeMismatch {
+        expected: Type,
+        found: Type,
+        term: Term,
+    },
+    NotAFunction {
+        found: Type,
+        term: Term,
+    },
+    NotAPair {
+        found: Type,
+        term: Term,
+    },
+    IfBranchMismatch {
+        then_type: Type,
+        else_type: Type,
+        term: Term,
+    },
+    IfScrutineeNotBool {
+        found: Type,
+        term: Term,
+    },
+    ArithmeticRequiresInt {
+        found: Type,
+        term: Term,
+    },
+    EqualityTypeMismatch {
+        lhs: Type,
+        rhs: Type,
+        term: Term,
+    },
+}
+
+pub fn typecheck(env: &HashMap<String, Type>, term: &Term) -> Result<Type, TypeError> {
     match term {
         Term::Const(Const::Unit) => Ok(Type::Unit),
         Term::Const(Const::Int(_)) => Ok(Type::Int),
@@ -256,7 +295,10 @@ pub fn typecheck(env: &HashMap<String, Type>, term: &Term) -> Result<Type, Strin
         Term::Var(var) => env
             .get(var)
             .map(|x| x.clone())
-            .ok_or("No variable with this name has been initialised".to_string()),
+            .ok_or(TypeError::UndefinedVariable {
+                var: var.clone(),
+                term: term.clone(),
+            }),
 
         Term::Pair(lhs, rhs) => typecheck_pair(env, lhs, rhs),
 
@@ -264,14 +306,22 @@ pub fn typecheck(env: &HashMap<String, Type>, term: &Term) -> Result<Type, Strin
             Ok(Type::Arrow(Box::new(t.clone()), Box::new(t2)))
         }),
 
-        Term::Fst(term) => match typecheck(env, term)? {
+        Term::Fst(m) => match typecheck(env, m)? {
             Type::Pair(lhs_type, _) => Ok(*lhs_type),
-            _ => Err("can't take first element of non-pair".to_string()),
+
+            other_type => Err(TypeError::NotAPair {
+                found: other_type,
+                term: term.clone(),
+            }),
         },
 
-        Term::Snd(term) => match typecheck(env, term)? {
+        Term::Snd(m) => match typecheck(env, m)? {
             Type::Pair(_, rhs_type) => Ok(*rhs_type),
-            _ => Err("can't take second element of non-pair".to_string()),
+
+            other_type => Err(TypeError::NotAPair {
+                found: other_type,
+                term: term.clone(),
+            }),
         },
 
         Term::App(m, n) => {
@@ -280,10 +330,17 @@ pub fn typecheck(env: &HashMap<String, Type>, term: &Term) -> Result<Type, Strin
 
             match t_m {
                 Type::Arrow(from, to) if *from == t_n => Ok(*to),
-                Type::Arrow(from, to) => Err(format!(
-                    "Can't apply term of type {t_n:#?} to function of type {from:#?} -> {to:#?}"
-                )),
-                _ => Err("term m must be a function".to_string()),
+
+                Type::Arrow(from, _) => Err(TypeError::TypeMismatch {
+                    expected: *from,
+                    found: t_n,
+                    term: term.clone(),
+                }),
+
+                _ => Err(TypeError::NotAFunction {
+                    found: t_m,
+                    term: term.clone(),
+                }),
             }
         }
 
@@ -299,8 +356,17 @@ pub fn typecheck(env: &HashMap<String, Type>, term: &Term) -> Result<Type, Strin
 
             match (t_b, t_m == t_n) {
                 (Type::Bool, true) => Ok(t_m),
-                (Type::Bool, false) => Err("branches must have same type".to_string()),
-                _ => Err("scrutinee must be bool".to_string()),
+
+                (Type::Bool, false) => Err(TypeError::IfBranchMismatch {
+                    then_type: t_m,
+                    else_type: t_n,
+                    term: term.clone(),
+                }),
+
+                (other_type, _) => Err(TypeError::IfScrutineeNotBool {
+                    found: other_type,
+                    term: term.clone(),
+                }),
             }
         }
 
@@ -310,22 +376,26 @@ pub fn typecheck(env: &HashMap<String, Type>, term: &Term) -> Result<Type, Strin
 
             match (op, t_m, t_n) {
                 (BinOp::Eq, t1, t2) if t1 == t2 => Ok(Type::Bool),
-                (BinOp::Eq, _, _) => {
-                    Err("both branches of equality comparison must be the same type".to_string())
-                }
+
+                (BinOp::Eq, t1, t2) => Err(TypeError::EqualityTypeMismatch {
+                    lhs: t1,
+                    rhs: t2,
+                    term: term.clone(),
+                }),
 
                 (BinOp::Plus, Type::Int, Type::Int) => Ok(Type::Int),
                 (BinOp::Minus, Type::Int, Type::Int) => Ok(Type::Int),
-                _ => Err(
-                    "arithemetic operations require integers on both sides of the operator"
-                        .to_string(),
-                ),
+
+                (_, t1, t2) => Err(TypeError::ArithmeticRequiresInt {
+                    found: if t1 != Type::Int { t1 } else { t2 },
+                    term: term.clone(),
+                }),
             }
         }
     }
 }
 
-fn typecheck_pair(env: &HashMap<String, Type>, lhs: &Term, rhs: &Term) -> Result<Type, String> {
+fn typecheck_pair(env: &HashMap<String, Type>, lhs: &Term, rhs: &Term) -> Result<Type, TypeError> {
     let lhs_type = typecheck(env, lhs)?;
     let rhs_type = typecheck(env, rhs)?;
 
@@ -338,9 +408,9 @@ fn typecheck_in_extended_env<F>(
     t: &Type,
     term: &Term,
     modifier: F,
-) -> Result<Type, String>
+) -> Result<Type, TypeError>
 where
-    F: Fn(Type) -> Result<Type, String>,
+    F: Fn(Type) -> Result<Type, TypeError>,
 {
     let mut temp_env = env.clone();
     temp_env.insert(var, t.clone());
