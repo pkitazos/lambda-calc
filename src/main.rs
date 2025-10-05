@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match typechecker::typecheck(&env, &expr) {
                     Ok(t) => {
                         println!("\nType: {}", t);
-                        let r = interpreter::eval(expr, HashMap::new());
+                        let r = interpreter::eval(expr, &interpreter::empty_env());
                         println!("\nResult: {}", r);
                     }
                     Err(e) => println!("\n{}", e),

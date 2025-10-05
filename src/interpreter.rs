@@ -1,15 +1,20 @@
 use crate::{BinOp, Const, Term};
+use std::rc::Rc;
 
-pub fn eval(term: Term, env: &Vec<(String, Term)>) -> Term {
+pub enum Env {
+    Empty,
+    Cons(String, Term, Rc<Env>),
+}
+
+pub fn empty_env() -> Rc<Env> {
+    Rc::new(Env::Empty)
+}
+
+pub fn eval(term: Term, env: &Rc<Env>) -> Term {
     match term {
         Term::Const(_c) => term,
 
-        Term::Var(v) => env
-            .iter()
-            .rev()
-            .find(|(name, _)| name == &v)
-            .map(|(_, term)| term.clone())
-            .unwrap(),
+        Term::Var(v) => find(&v, env),
 
         Term::Pair(m, n) => Term::Pair(Box::new(eval(*m, env)), Box::new(eval(*n, env))),
 
@@ -26,16 +31,18 @@ pub fn eval(term: Term, env: &Vec<(String, Term)>) -> Term {
 
         Term::App(m, n) => match eval(*m, env) {
             Term::Lambda(v, _, m_2) => {
-                let mut new_env = env.clone();
-                new_env.push((v, eval(*n, env)));
+                let value = eval(*n, env);
+                let new_env = Rc::new(Env::Cons(v, value, Rc::clone(&env)));
+
                 eval(*m_2, &new_env)
             }
             _ => panic!("runtime error"),
         },
 
         Term::Let(v, m, n) => {
-            let mut new_env = env.clone();
-            new_env.push((v, eval(*m, env)));
+            let value = eval(*m, env);
+            let new_env = Rc::new(Env::Cons(v, value, Rc::clone(&env)));
+
             eval(*n, &new_env)
         }
 
@@ -75,6 +82,19 @@ pub fn eval(term: Term, env: &Vec<(String, Term)>) -> Term {
                     Term::Const(Const::Int(i_m - i_n))
                 }
                 _ => panic!("runtime error"),
+            }
+        }
+    }
+}
+
+fn find(v: &str, env: &Rc<Env>) -> Term {
+    match env.as_ref() {
+        Env::Empty => panic!("runtime error"),
+        Env::Cons(name, term, rest) => {
+            if name == v {
+                term.clone()
+            } else {
+                find(v, &rest)
             }
         }
     }
