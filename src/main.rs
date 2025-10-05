@@ -1,14 +1,18 @@
 use std::{collections::HashMap, fs::File, io::Read};
-use stlc::{parser, typechecker};
+use stlc::{interpreter, parser, typechecker};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     match read_code("examples/scratch.lc") {
         Some(code) => {
-            println!("{:#?}", code);
+            println!("{}", code);
             if let Ok((_, expr)) = parser::parse(&code) {
                 let env = HashMap::new();
                 match typechecker::typecheck(&env, &expr) {
-                    Ok(t) => println!("Type: {:#?}", t),
+                    Ok(t) => {
+                        println!("\nType: {}", t);
+                        let r = interpreter::eval(expr, HashMap::new());
+                        println!("\nResult: {}", r);
+                    }
                     Err(e) => println!("\n{}", e),
                 }
             }

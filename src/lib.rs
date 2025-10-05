@@ -1,8 +1,8 @@
 use std::fmt;
 
-pub mod typechecker;
-
+pub mod interpreter;
 pub mod parser;
+pub mod typechecker;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
@@ -25,7 +25,7 @@ impl fmt::Display for Type {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Const {
     Int(i32),
     Bool(bool),
@@ -85,7 +85,7 @@ impl fmt::Display for Term {
             Term::App(m, n) => write!(f, " {} {} ", m, n),
             Term::Let(v, m, n) => write!(f, " let {} = {} in {} ", v, m, n),
             Term::If(b, m, n) => write!(f, " if {} then {} else {} ", b, m, n),
-            Term::BinOp(b, m, n) => write!(f, " {} {} {} ", m, b, n),
+            Term::BinOp(op, m, n) => write!(f, " {} {} {} ", m, op, n),
         }
     }
 }
