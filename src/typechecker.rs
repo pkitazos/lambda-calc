@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::{BinOp, Const, Term, Type};
 
@@ -39,6 +40,65 @@ pub enum TypeError {
         rhs: Type,
         term: Term,
     },
+}
+
+impl fmt::Display for TypeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TypeError::UndefinedVariable { var, term } => {
+                write!(f, "Undefined variable: {}\nIn term: {}", var, term)
+            }
+            TypeError::TypeMismatch {
+                expected,
+                found,
+                term,
+            } => {
+                write!(
+                    f,
+                    "Type mismatch: expected {}, found {}\nIn term: {}",
+                    expected, found, term
+                )
+            }
+            TypeError::NotAFunction { found, term } => {
+                write!(f, "Not a function: found type {}\nIn term: {}", found, term)
+            }
+            TypeError::NotAPair { found, term } => {
+                write!(f, "Not a pair: found type {}\nIn term: {}", found, term)
+            }
+            TypeError::IfBranchMismatch {
+                then_type,
+                else_type,
+                term,
+            } => {
+                write!(
+                    f,
+                    "If branch type mismatch: then has type {}, else has type {}\nIn term: {}",
+                    then_type, else_type, term
+                )
+            }
+            TypeError::IfScrutineeNotBool { found, term } => {
+                write!(
+                    f,
+                    "If condition must be Bool, found {}\nIn term: {}",
+                    found, term
+                )
+            }
+            TypeError::ArithmeticRequiresInt { found, term } => {
+                write!(
+                    f,
+                    "Arithmetic operation requires Int, found {}\nIn term: {}",
+                    found, term
+                )
+            }
+            TypeError::EqualityTypeMismatch { lhs, rhs, term } => {
+                write!(
+                    f,
+                    "Equality requires matching types: left has type {}, right has type {}\nIn term: {}",
+                    lhs, rhs, term
+                )
+            }
+        }
+    }
 }
 
 pub fn typecheck(env: &HashMap<String, Type>, term: &Term) -> Result<Type, TypeError> {

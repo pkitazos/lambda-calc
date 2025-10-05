@@ -6,11 +6,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(code) => {
             println!("{:#?}", code);
             if let Ok((_, expr)) = parser::parse(&code) {
-                println!("{:#?}", expr);
                 let env = HashMap::new();
                 match typechecker::typecheck(&env, &expr) {
                     Ok(t) => println!("Type: {:#?}", t),
-                    Err(_e) => println!("Type error!",),
+                    Err(e) => println!("\n{}", e),
                 }
             }
         }
