@@ -7,8 +7,8 @@ The core of the language will just be the STLC + a tiny bit of quality of life (
 ## Syntax
 
 ```
-T     := unit | int | bool
-τ     := τ -> τ | τ × τ | T
+C     := unit | int | bool
+A, B     := A -> B | A × B | C
 
 M, N  := x
       | M ◇ N
@@ -17,9 +17,20 @@ M, N  := x
       | fst M
       | snd M
       | let x = M in N
-      | fn x:τ . M
+      | fn x:A . M
       | M N
       | c
 
 ◇    := + | - | ==
 ```
+
+## next:
+
+- recursion construct / fixpoint operator
+- arbitrary-size tuples
+- lists
+- sum types / variants
+- pattern matching
+
+<!-- squarely leaving STLC territory -->
+- polymorphism Λα.[α] -> (α -> bool) -> [α]

@@ -1,34 +1,61 @@
 use crate::{BinOp, Const, Term};
-use std::rc::Rc;
+use std::{fmt, rc::Rc};
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum Env {
     Empty,
-    Cons(String, Term, Rc<Env>),
+    Cons(String, Box<Value>, Rc<Env>),
+}
+
+impl fmt::Display for Env {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Env::Empty => write!(f, ""),
+            Env::Cons(v, m, env) => write!(f, "{}: {}, {}", v, m, env),
+        }
+    }
 }
 
 pub fn empty_env() -> Rc<Env> {
     Rc::new(Env::Empty)
 }
 
-pub fn eval(term: Term, env: &Rc<Env>) -> Term {
+#[derive(Clone, Debug, PartialEq)]
+pub enum Value {
+    Const(Const),
+    Pair(Box<Value>, Box<Value>),
+    Closure(String, Box<Term>, Rc<Env>), // variable, body, captured env
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Value::Const(c) => write!(f, " {} ", c),
+            Value::Pair(m, n) => write!(f, " ({}, {}) ", m, n),
+            Value::Closure(v, m, env) => write!(f, " λ {} . {} Env{{{}}} ", v, m, env),
+        }
+    }
+}
+
+pub fn eval(term: Term, env: &Rc<Env>) -> Value {
     match term {
-        Term::Const(_c) => term,
+        Term::Const(c) => Value::Const(c),
 
         Term::Var(v) => find(&v, env),
 
-        Term::Pair(m, n) => Term::Pair(Box::new(eval(*m, env)), Box::new(eval(*n, env))),
+        Term::Pair(m, n) => Value::Pair(Box::new(eval(*m, env)), Box::new(eval(*n, env))),
 
-        Term::Lambda(v, t, m) => Term::Lambda(v, t, m),
+        Term::Lambda(v, _, m) => Value::Closure(v, m, Rc::clone(env)),
 
         Term::Fst(m) => match eval(*m, env) {
-            Term::Pair(a, _b) => *a,
+            Value::Pair(a, _b) => *a,
             other => panic!(
                 "runtime error: expected a Pair in Fst, but found {:?}",
                 other
             ),
         },
         Term::Snd(m) => match eval(*m, env) {
-            Term::Pair(_a, b) => *b,
+            Value::Pair(_a, b) => *b,
             other => panic!(
                 "runtime error: expected a Pair in Snd, but found {:?}",
                 other
@@ -36,9 +63,9 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
         },
 
         Term::App(m, n) => match eval(*m, env) {
-            Term::Lambda(v, _, m_2) => {
+            Value::Closure(v, m_2, closure_env) => {
                 let value = eval(*n, env);
-                let new_env = Rc::new(Env::Cons(v, value, Rc::clone(&env)));
+                let new_env = Rc::new(Env::Cons(v, Box::new(value), Rc::clone(&closure_env)));
 
                 eval(*m_2, &new_env)
             }
@@ -50,14 +77,14 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
 
         Term::Let(v, m, n) => {
             let value = eval(*m, env);
-            let new_env = Rc::new(Env::Cons(v, value, Rc::clone(&env)));
+            let new_env = Rc::new(Env::Cons(v, Box::new(value), Rc::clone(&env)));
 
             eval(*n, &new_env)
         }
 
         Term::If(b, m, n) => match eval(*b, env) {
-            Term::Const(Const::Bool(true)) => eval(*m, env),
-            Term::Const(Const::Bool(false)) => eval(*n, env),
+            Value::Const(Const::Bool(true)) => eval(*m, env),
+            Value::Const(Const::Bool(false)) => eval(*n, env),
             other => panic!(
                 "runtime error: expected a Bool in If condition, but found {:?}",
                 other
@@ -69,12 +96,12 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
             let n2 = eval(*n, env);
 
             match (m2, n2) {
-                (Term::Const(Const::Bool(b_m)), Term::Const(Const::Bool(b_n))) => {
-                    Term::Const(Const::Bool(b_m == b_n))
+                (Value::Const(Const::Bool(b_m)), Value::Const(Const::Bool(b_n))) => {
+                    Value::Const(Const::Bool(b_m == b_n))
                 }
 
-                (Term::Const(Const::Int(i_m)), Term::Const(Const::Int(i_n))) => {
-                    Term::Const(Const::Bool(i_m == i_n))
+                (Value::Const(Const::Int(i_m)), Value::Const(Const::Int(i_n))) => {
+                    Value::Const(Const::Bool(i_m == i_n))
                 }
 
                 (left, right) => panic!(
@@ -89,12 +116,12 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
             let n2 = eval(*n, env);
 
             match (op, m2, n2) {
-                (BinOp::Plus, Term::Const(Const::Int(i_m)), Term::Const(Const::Int(i_n))) => {
-                    Term::Const(Const::Int(i_m + i_n))
+                (BinOp::Plus, Value::Const(Const::Int(i_m)), Value::Const(Const::Int(i_n))) => {
+                    Value::Const(Const::Int(i_m + i_n))
                 }
 
-                (BinOp::Minus, Term::Const(Const::Int(i_m)), Term::Const(Const::Int(i_n))) => {
-                    Term::Const(Const::Int(i_m - i_n))
+                (BinOp::Minus, Value::Const(Const::Int(i_m)), Value::Const(Const::Int(i_n))) => {
+                    Value::Const(Const::Int(i_m - i_n))
                 }
                 (op, left, right) => panic!(
                     "runtime error: unsupported operation {:?} with operands {:?} and {:?}",
@@ -105,12 +132,12 @@ pub fn eval(term: Term, env: &Rc<Env>) -> Term {
     }
 }
 
-fn find(v: &str, env: &Rc<Env>) -> Term {
+fn find(v: &str, env: &Rc<Env>) -> Value {
     match env.as_ref() {
         Env::Empty => panic!("runtime error: variable '{}' not found in environment", v),
-        Env::Cons(name, term, rest) => {
+        Env::Cons(name, value, rest) => {
             if name == v {
-                term.clone()
+                *value.clone()
             } else {
                 find(v, &rest)
             }

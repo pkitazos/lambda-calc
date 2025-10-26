@@ -1,1 +1,0 @@
-let x = 5 in if (x == 2) then (x + 4) else (x - 2)

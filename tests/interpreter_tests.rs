@@ -1,24 +1,24 @@
 use std::rc::Rc;
-use stlc::interpreter::{empty_env, eval};
+use stlc::interpreter::{Value, empty_env, eval};
 use stlc::{BinOp, Const, Term, Type};
 
 #[test]
 fn test_eval_const() {
     let term = Term::Const(Const::Int(42));
     let result = eval(term.clone(), &empty_env());
-    assert_eq!(result, term);
+    assert_eq!(result, Value::Const(Const::Int(42)));
 }
 
 #[test]
 fn test_eval_var() {
     let env = Rc::new(stlc::interpreter::Env::Cons(
         "x".to_string(),
-        Term::Const(Const::Int(10)),
+        Box::new(Value::Const(Const::Int(10))),
         empty_env(),
     ));
     let term = Term::Var("x".to_string());
     let result = eval(term, &env);
-    assert_eq!(result, Term::Const(Const::Int(10)));
+    assert_eq!(result, Value::Const(Const::Int(10)));
 }
 
 #[test]
@@ -37,9 +37,9 @@ fn test_eval_pair() {
     let result = eval(term, &empty_env());
     assert_eq!(
         result,
-        Term::Pair(
-            Box::new(Term::Const(Const::Int(1))),
-            Box::new(Term::Const(Const::Int(2)))
+        Value::Pair(
+            Box::new(Value::Const(Const::Int(1))),
+            Box::new(Value::Const(Const::Int(2))),
         )
     );
 }
@@ -51,7 +51,7 @@ fn test_eval_fst() {
         Box::new(Term::Const(Const::Int(2))),
     )));
     let result = eval(term, &empty_env());
-    assert_eq!(result, Term::Const(Const::Int(1)));
+    assert_eq!(result, Value::Const(Const::Int(1)));
 }
 
 #[test]
@@ -61,7 +61,7 @@ fn test_eval_snd() {
         Box::new(Term::Const(Const::Int(2))),
     )));
     let result = eval(term, &empty_env());
-    assert_eq!(result, Term::Const(Const::Int(2)));
+    assert_eq!(result, Value::Const(Const::Int(2)));
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn test_eval_app() {
         Box::new(Term::Const(Const::Int(5))),
     );
     let result = eval(term, &empty_env());
-    assert_eq!(result, Term::Const(Const::Int(5)));
+    assert_eq!(result, Value::Const(Const::Int(5)));
 }
 
 #[test]
@@ -86,7 +86,7 @@ fn test_eval_let() {
         Box::new(Term::Var("x".to_string())),
     );
     let result = eval(term, &empty_env());
-    assert_eq!(result, Term::Const(Const::Int(10)));
+    assert_eq!(result, Value::Const(Const::Int(10)));
 }
 
 #[test]
@@ -97,7 +97,7 @@ fn test_eval_if() {
         Box::new(Term::Const(Const::Int(2))),
     );
     let result = eval(term, &empty_env());
-    assert_eq!(result, Term::Const(Const::Int(1)));
+    assert_eq!(result, Value::Const(Const::Int(1)));
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn test_eval_binop_eq() {
         Box::new(Term::Const(Const::Int(3))),
     );
     let result = eval(term, &empty_env());
-    assert_eq!(result, Term::Const(Const::Bool(true)));
+    assert_eq!(result, Value::Const(Const::Bool(true)));
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn test_eval_binop_plus() {
         Box::new(Term::Const(Const::Int(3))),
     );
     let result = eval(term, &empty_env());
-    assert_eq!(result, Term::Const(Const::Int(5)));
+    assert_eq!(result, Value::Const(Const::Int(5)));
 }
 
 #[test]
@@ -130,5 +130,5 @@ fn test_eval_binop_minus() {
         Box::new(Term::Const(Const::Int(3))),
     );
     let result = eval(term, &empty_env());
-    assert_eq!(result, Term::Const(Const::Int(2)));
+    assert_eq!(result, Value::Const(Const::Int(2)));
 }
