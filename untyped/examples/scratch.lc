@@ -1,1 +1,5 @@
-(λ a b . a) (λ x. x) (λ y.y)
+# program using std lib
+
+:import std/bool.lc
+
+AND TRUE FALSE

@@ -1,13 +1,15 @@
-use crate::Term;
+use std::collections::HashMap;
+
+use crate::{Program, Term};
 
 use nom::{
     IResult, Parser,
     branch::alt,
     bytes::complete::tag,
     character::complete::{alpha1, alphanumeric1, char, space0},
-    combinator::{map, recognize},
-    multi::{many0_count, many1},
-    sequence::{delimited, pair},
+    combinator::{map, opt, recognize},
+    multi::{many0, many0_count, many1},
+    sequence::{delimited, pair, separated_pair},
 };
 
 fn ws<'a, F, O>(inner: F) -> impl Parser<&'a str, Output = O, Error = nom::error::Error<&'a str>>
@@ -17,8 +19,22 @@ where
     delimited(space0, inner, space0)
 }
 
-pub fn parse(input: &str) -> IResult<&str, Term> {
-    parse_term(input)
+pub fn parse(input: &str) -> IResult<&str, Program> {
+    map(
+        pair(many0(parse_definition), opt(parse_term)),
+        |(defs, expression)| Program {
+            definitions: defs
+                .into_iter()
+                .map(|(id, expr)| (id.to_string(), expr))
+                .collect(),
+            expression,
+        },
+    )
+    .parse(input)
+}
+
+fn parse_definition(input: &str) -> IResult<&str, (&str, Term)> {
+    separated_pair(parse_identifier, ws(tag(":=")), parse_term).parse(input)
 }
 
 fn parse_term(input: &str) -> IResult<&str, Term> {

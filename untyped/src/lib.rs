@@ -3,6 +3,12 @@ use std::fmt;
 pub mod interpreter;
 pub mod parser;
 
+#[derive(Debug, Clone)]
+pub struct Program {
+    pub definitions: Vec<(String, Term)>,
+    pub expression: Option<Term>,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Term {
     Var(String),

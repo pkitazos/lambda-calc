@@ -1,0 +1,6 @@
+lc> :import std/bool.lc
+:ok
+lc> MY_NOT := λa.a FALSE TRUE
+:ok
+lc> MY_NOT TRUE
+FALSE

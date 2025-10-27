@@ -5,9 +5,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     match read_code("examples/scratch.lc") {
         Some(code) => {
             println!("{}", code);
-            if let Ok((_, expr)) = parser::parse(&code) {
-                let r = interpreter::eval(expr, &interpreter::empty_env());
-                println!("\nResult: {}", r);
+            if let Ok((_, program)) = parser::parse(&code) {
+                let initial_env = interpreter::empty_env();
+                // todo: build up initial env form program.definitions instead
+                if let Some(expr) = program.expression {
+                    match interpreter::eval(expr, &initial_env) {
+                        Ok(result) => println!("\nResult: {}", result),
+                        Err(e) => eprintln!("{}", e),
+                    }
+                }
             }
         }
         None => println!("something went wrong"),
