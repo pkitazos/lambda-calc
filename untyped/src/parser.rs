@@ -22,7 +22,7 @@ pub fn parse(input: &str) -> IResult<&str, Program> {
         pair(
             many0(terminated(
                 parse_definition,
-                (ws(char(';')), opt(ws(tag("\n")))),
+                (ws(char(';')), many0(ws(tag("\n")))),
             )),
             opt(parse_term),
         ),

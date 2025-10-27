@@ -1,6 +1,0 @@
-TRUE  := λx.λy.x;
-FALSE := λx.λy.y;
-AND := λp.λq.p q FALSE;
-OR  := λp.λq.p TRUE q;
-NOT := λp.p FALSE TRUE;
-AND TRUE TRUE
