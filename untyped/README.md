@@ -13,3 +13,4 @@ M, N  := x
 ## next:
 
 - [ ] add top level expression aliasing to make life a little bit easier
+- [ ] maybe even add let-expressions syntax sugar
