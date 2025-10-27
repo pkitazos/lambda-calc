@@ -12,5 +12,7 @@ M, N  := x
 
 ## next:
 
-- [ ] add top level expression aliasing to make life a little bit easier
-- [ ] maybe even add let-expressions syntax sugar
+- [x] add top level expression aliasing to make life a little bit easier
+- [ ] comments could be helpful since code is often totally unreadable
+- [ ] finish formatter
+- [ ] look into de bruijn indices to be able to print out definition name rather than internal expression in result
