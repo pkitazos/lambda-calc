@@ -8,28 +8,36 @@ use ulc::*;
 fn test_var_single() {
     let input = "x";
     let expected = Term::Var("x".to_string());
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
 fn test_var_multi_char() {
     let input = "foo";
     let expected = Term::Var("foo".to_string());
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
 fn test_var_with_underscore() {
     let input = "foo_bar";
     let expected = Term::Var("foo_bar".to_string());
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
 fn test_var_starting_with_underscore() {
     let input = "_x";
     let expected = Term::Var("_x".to_string());
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 // ============================================================================
@@ -40,14 +48,18 @@ fn test_var_starting_with_underscore() {
 fn test_lambda_identity() {
     let input = "λx. x";
     let expected = Term::Lambda("x".to_string(), Box::new(Term::Var("x".to_string())));
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
 fn test_lambda_const() {
     let input = "λx. y";
     let expected = Term::Lambda("x".to_string(), Box::new(Term::Var("y".to_string())));
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -60,7 +72,9 @@ fn test_lambda_nested_manual() {
             Box::new(Term::Var("x".to_string())),
         )),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -76,7 +90,9 @@ fn test_lambda_three_nested() {
             )),
         )),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -92,7 +108,9 @@ fn test_lambda_with_app_body() {
             )),
         )),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 // ============================================================================
@@ -106,7 +124,9 @@ fn test_app_simple() {
         Box::new(Term::Var("f".to_string())),
         Box::new(Term::Var("x".to_string())),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -119,7 +139,9 @@ fn test_app_left_associative() {
         )),
         Box::new(Term::Var("y".to_string())),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -135,7 +157,9 @@ fn test_app_three_terms() {
         )),
         Box::new(Term::Var("d".to_string())),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -148,7 +172,9 @@ fn test_app_with_parens() {
             Box::new(Term::Var("x".to_string())),
         )),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -164,7 +190,9 @@ fn test_app_nested_right() {
             )),
         )),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -177,7 +205,9 @@ fn test_app_lambda() {
         )),
         Box::new(Term::Var("y".to_string())),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 // ============================================================================
@@ -188,21 +218,27 @@ fn test_app_lambda() {
 fn test_paren_var() {
     let input = "(x)";
     let expected = Term::Var("x".to_string());
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
 fn test_paren_lambda() {
     let input = "(λx. x)";
     let expected = Term::Lambda("x".to_string(), Box::new(Term::Var("x".to_string())));
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
 fn test_paren_nested() {
     let input = "((x))";
     let expected = Term::Var("x".to_string());
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -212,7 +248,9 @@ fn test_paren_app() {
         Box::new(Term::Var("f".to_string())),
         Box::new(Term::Var("x".to_string())),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 // ============================================================================
@@ -223,14 +261,18 @@ fn test_paren_app() {
 fn test_whitespace_around_lambda() {
     let input = "λx . x";
     let expected = Term::Lambda("x".to_string(), Box::new(Term::Var("x".to_string())));
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
 fn test_whitespace_minimal() {
     let input = "λx.x";
     let expected = Term::Lambda("x".to_string(), Box::new(Term::Var("x".to_string())));
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }
 
 #[test]
@@ -243,5 +285,7 @@ fn test_whitespace_in_app() {
         )),
         Box::new(Term::Var("y".to_string())),
     );
-    assert_eq!(parser::parse(input), Ok(("", expected)));
+
+    let (_, program) = parser::parse(input).unwrap();
+    assert_eq!(program.expression, Some(expected));
 }

@@ -16,17 +16,19 @@ impl fmt::Display for Env {
     }
 }
 
-// pub fn env_from_defs(defs: Vec<(String, Term)>) -> Rc<Env> {
-//     // initialise an empty env
-//     for (id, expr) in defs {
-//         // try to evaluate the expression with the env so far
-//         // if it successfully evaluates store it under the id in the Env
-//         // otherwise try evaluating the next one and come back to this one with a more complete env
-//     }
-// }
-
 pub fn empty_env() -> Rc<Env> {
     Rc::new(Env::Empty)
+}
+
+pub fn env_from_defs(defs: &Vec<(String, Term)>) -> Result<Rc<Env>, String> {
+    let env = empty_env();
+
+    for (id, expr) in defs {
+        let value = eval(expr.clone(), &env)?;
+        Rc::new(Env::Cons(id.clone(), value, Rc::clone(&env)));
+    }
+
+    Ok(env)
 }
 
 #[derive(Clone, Debug)]
