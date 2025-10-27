@@ -7,7 +7,7 @@ use nom::{
     character::complete::{alpha1, alphanumeric1, char, space0},
     combinator::{map, opt, recognize},
     multi::{many0, many0_count, many1},
-    sequence::{delimited, pair, separated_pair},
+    sequence::{delimited, pair, separated_pair, terminated},
 };
 
 fn ws<'a, F, O>(inner: F) -> impl Parser<&'a str, Output = O, Error = nom::error::Error<&'a str>>
@@ -19,7 +19,13 @@ where
 
 pub fn parse(input: &str) -> IResult<&str, Program> {
     map(
-        pair(many0(parse_definition), opt(parse_term)),
+        pair(
+            many0(terminated(
+                parse_definition,
+                (ws(char(';')), opt(ws(tag("\n")))),
+            )),
+            opt(parse_term),
+        ),
         |(defs, expression)| Program {
             definitions: defs
                 .into_iter()

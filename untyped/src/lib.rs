@@ -19,9 +19,9 @@ pub enum Term {
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Term::Var(v) => write!(f, " {} ", v),
-            Term::Lambda(v, m) => write!(f, " λ{}.{} ", v, m),
-            Term::App(m, n) => write!(f, " {} {} ", m, n),
+            Term::Var(v) => write!(f, "{} ", v),
+            Term::Lambda(v, m) => write!(f, "λ{}.{}", v, m),
+            Term::App(m, n) => write!(f, "{} {}", m, n),
         }
     }
 }

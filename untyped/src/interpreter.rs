@@ -21,11 +21,11 @@ pub fn empty_env() -> Rc<Env> {
 }
 
 pub fn env_from_defs(defs: &Vec<(String, Term)>) -> Result<Rc<Env>, String> {
-    let env = empty_env();
+    let mut env = empty_env();
 
     for (id, expr) in defs {
         let value = eval(expr.clone(), &env)?;
-        Rc::new(Env::Cons(id.clone(), value, Rc::clone(&env)));
+        env = Rc::new(Env::Cons(id.clone(), value, Rc::clone(&env)));
     }
 
     Ok(env)
@@ -39,7 +39,7 @@ pub enum Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Value::Closure(v, m, env) => write!(f, " λ {} . {} Env{{{}}}", v, m, env),
+            Value::Closure(v, m, env) => write!(f, " λ{}.{} Env{{{}}}", v, m, env),
         }
     }
 }

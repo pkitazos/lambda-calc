@@ -3,27 +3,36 @@ use ulc::{interpreter, parser};
 
 fn main() -> Result<(), Box<dyn Error>> {
     match read_code("examples/scratch.lc") {
+        None => eprintln!("Something went wrong reading the file"),
+
         Some(code) => {
             println!("{}", code);
-            match parser::parse(&code) {
-                Ok((_, program)) => match interpreter::env_from_defs(&program.definitions) {
-                    Ok(env) => match program.expression {
-                        Some(expr) => match interpreter::eval(expr, &env) {
-                            Ok(result) => println!("\nResult: {}", result),
-                            Err(e) => eprintln!("{}", e),
-                        },
-                        None => {
-                            println!("{:#?}", program);
-                            eprintln!("erm")
-                        }
-                    },
-                    Err(e) => eprintln!("{}", e),
-                },
 
-                Err(e) => eprintln!("{}", e),
+            match parser::parse(&code) {
+                Err(e) => eprintln!("Error parsing the code: \n{}", e),
+
+                Ok((_, program)) => {
+                    // println!("\n\nDefs: {:#?}", &program.definitions);
+
+                    match interpreter::env_from_defs(&program.definitions) {
+                        Err(e) => eprintln!("Error building the initial env: \n{}", e),
+
+                        Ok(env) => {
+                            // println!("\n\nEnv: {}", env);
+
+                            match program.expression {
+                                None => eprintln!("Nothing to do here"),
+
+                                Some(expr) => match interpreter::eval(expr, &env) {
+                                    Err(e) => eprintln!("Error evaluating the program: \n{}", e),
+                                    Ok(result) => println!("\nResult: {}", result),
+                                },
+                            }
+                        }
+                    }
+                }
             }
         }
-        None => eprintln!("something went wrong"),
     }
 
     Ok(())
