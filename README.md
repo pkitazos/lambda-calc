@@ -1,4 +1,4 @@
-# The Lambda Calculus
+# The λ-calculus
 
 As a learning exercise I wanted to build an environment in which I can mess around with different variants of the lambda calculus. The goal is to build the core of the langauge and then branch off in different directions to add different language features.
 
@@ -10,7 +10,7 @@ The core of the language will just be the STLC + a tiny bit of quality of life (
 
 ```
 C     := unit | int | bool
-A, B     := A -> B | A × B | C
+A, B  := A -> B | A × B | C
 
 M, N  := x
       | M ◇ N
@@ -19,7 +19,7 @@ M, N  := x
       | fst M
       | snd M
       | let x = M in N
-      | fn x:A . M
+      | λ x:A . M
       | M N
       | c
 
