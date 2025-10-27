@@ -1,7 +1,7 @@
-use std::{collections::HashMap, fs::File, io::Read};
+use std::{collections::HashMap, error::Error, fs::File, io::Read};
 use stlc::{interpreter, parser, typechecker};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     match read_code("examples/scratch.lc") {
         Some(code) => {
             println!("{}", code);

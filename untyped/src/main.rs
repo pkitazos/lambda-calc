@@ -1,7 +1,7 @@
-use std::{fs::File, io::Read};
+use std::{error::Error, fs::File, io::Read};
 use ulc::{interpreter, parser};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     match read_code("examples/scratch.lc") {
         Some(code) => {
             println!("{}", code);
