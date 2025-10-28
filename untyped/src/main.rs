@@ -2,39 +2,29 @@ use std::{error::Error, fs::File, io::Read};
 use ulc::{interpreter, parser};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    match read_code("examples/scratch.lc") {
-        None => eprintln!("Something went wrong reading the file"),
-
-        Some(code) => {
-            println!("{}", code);
-
-            match parser::parse(&code) {
-                Err(e) => eprintln!("Error parsing the code: \n{}", e),
-
-                Ok((_, program)) => {
-                    // println!("\n\nDefs: {:#?}", &program.definitions);
-
-                    match interpreter::env_from_defs(&program.definitions) {
-                        Err(e) => eprintln!("Error building the initial env: \n{}", e),
-
-                        Ok(env) => {
-                            // println!("\n\nEnv: {}", env);
-
-                            match program.expression {
-                                None => eprintln!("Nothing to do here"),
-
-                                Some(expr) => match interpreter::eval(expr, &env) {
-                                    Err(e) => eprintln!("Error evaluating the program: \n{}", e),
-                                    Ok(result) => println!("\nResult: {}", result),
-                                },
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    if let Err(e) = run("examples/scratch.lc") {
+        eprintln!("{}", e);
     }
+    Ok(())
+}
 
+fn run(filename: &str) -> Result<(), String> {
+    let code = read_code(filename).ok_or("Failed to read file")?;
+
+    println!("{}", code);
+
+    let (_, program) =
+        parser::parse(&code).map_err(|e| format!("Error parsing the code: \n{}", e))?;
+
+    let env = interpreter::env_from_defs(&program.definitions)
+        .map_err(|e| format!("Error building the initial env: \n{}", e))?;
+
+    let expr = program.expression.ok_or("Nothing to do here")?;
+
+    let result = interpreter::eval(expr, &env)
+        .map_err(|e| format!("Error evaluating the program: \n{}", e))?;
+
+    println!("\nResult: {}", result);
     Ok(())
 }
 

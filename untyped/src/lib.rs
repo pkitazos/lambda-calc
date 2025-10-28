@@ -14,6 +14,7 @@ pub enum Term {
     Var(String),
     Lambda(String, Box<Term>),
     App(Box<Term>, Box<Term>),
+    // Comment(String),
 }
 
 impl fmt::Display for Term {
@@ -22,6 +23,7 @@ impl fmt::Display for Term {
             Term::Var(v) => write!(f, "{} ", v),
             Term::Lambda(v, m) => write!(f, "λ{}.{}", v, m),
             Term::App(m, n) => write!(f, "{} {}", m, n),
+            // Term::Comment(x) => write!(f, "{}", x),
         }
     }
 }

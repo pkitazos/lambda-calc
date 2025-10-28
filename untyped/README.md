@@ -14,5 +14,5 @@ M, N  := x
 
 - [x] add top level expression aliasing to make life a little bit easier
 - [ ] comments could be helpful since code is often totally unreadable
-- [ ] finish formatter
+- [ ] start and finish formatter
 - [ ] look into de bruijn indices to be able to print out definition name rather than internal expression in result
