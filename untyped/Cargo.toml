@@ -6,3 +6,5 @@ edition.workspace = true
 [dependencies]
 nom = "8.0.0"
 either = "1.15.0"
+crossterm = "0.29.0"
+anyhow = "1.0.102"

@@ -85,7 +85,7 @@ fn find(v: &str, env: &Rc<Env>) -> Result<Closure, String> {
     }
 }
 
-fn step(term: &Term) -> Option<Term> {
+pub fn step(term: &Term) -> Option<Term> {
     match term.clone() {
         Term::Var(_) => None,
 
